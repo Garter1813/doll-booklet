@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="robots" content="noindex, nofollow">
+
+    <title>ドールイベントしおり</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+    <h1>ドールイベントしおり</h1>
+</header>
+
+<main>
+
+    <section id="map-area">
+
+        <h2>会場マップ</h2>
+
+        <div class="map-scroll">
+            <div id="map-container" class="custom-map"></div>
+        </div>
+
+    </section>
+
+    <section id="controls">
+
+        <h2>ディーラー一覧</h2>
+
+        <input
+            type="search"
+            id="search-input"
+            placeholder="ディーラー名・ブース番号で検索"
+        >
+
+        <div class="filter-buttons">
+
+            <button type="button" id="show-all">
+                すべて
+            </button>
+
+            <button type="button" id="show-priority">
+                ❤️ 優先
+            </button>
+
+            <button type="button" id="show-unvisited">
+                未確認
+            </button>
+
+            <button type="button" id="show-purchased">
+                🛒 購入済み
+            </button>
+
+        </div>
+
+    </section>
+
+    <section>
+        <div id="dealer-list"></div>
+    </section>
+
+</main>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
