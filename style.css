@@ -269,3 +269,15 @@ html{
         min-width: 38px;
     }
 }
+
+.priority-button.selected-priority {
+    background: #ff7895;
+    border-color: #e84468;
+    font-weight: bold;
+}
+
+.priority-button.selected-interest {
+    background: #ffd966;
+    border-color: #d7aa25;
+    font-weight: bold;
+}

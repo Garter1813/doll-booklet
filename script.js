@@ -43,6 +43,20 @@ function findDealer(booth) {
 }
 
 // ------------------------------------
+// 現在の優先度を取得
+// スマホで変更した値を優先する
+// ------------------------------------
+function getEffectivePriority(dealer) {
+    const savedPriority = savedState[dealer.booth]?.priority;
+
+    if (savedPriority) {
+        return savedPriority;
+    }
+
+    return dealer.priority || "normal";
+}
+
+// ------------------------------------
 // ブースボタンを作る
 // ------------------------------------
 function createBoothButton(booth) {
@@ -54,23 +68,21 @@ function createBoothButton(booth) {
     button.textContent = booth.replace("-", "");
     button.dataset.booth = booth;
 
-    if (
-        !dealer ||
-        (
-            !dealer.instagram &&
-            !dealer.x_url &&
-            !dealer.website
-        )
-    ) {
+    // ディーラー情報がないブースは薄くする
+    if (!dealer) {
         button.classList.add("inactive");
     }
 
-    if (dealer?.priority === "high") {
-        button.classList.add("priority");
-    }
+    if (dealer) {
+        const priority = getEffectivePriority(dealer);
 
-    if (dealer?.priority === "low") {
-        button.classList.add("interest");
+        if (priority === "high") {
+            button.classList.add("priority");
+        }
+
+        if (priority === "low") {
+            button.classList.add("interest");
+        }
     }
 
     if (savedState[booth]?.visited) {
@@ -179,6 +191,7 @@ function createOuterColumn(numbers, className) {
 function renderMap() {
     mapContainer.innerHTML = "";
 
+    // 上側
     mapContainer.appendChild(
         createOuterRow(
             [
@@ -193,6 +206,7 @@ function renderMap() {
     const mapMiddle = document.createElement("div");
     mapMiddle.className = "map-middle";
 
+    // 左側
     mapMiddle.appendChild(
         createOuterColumn(
             [48, 1, 2, 3, 4],
@@ -200,6 +214,7 @@ function renderMap() {
         )
     );
 
+    // 中央
     const mapCenter = document.createElement("div");
     mapCenter.className = "map-center";
 
@@ -221,6 +236,7 @@ function renderMap() {
 
     mapMiddle.appendChild(mapCenter);
 
+    // 右側
     mapMiddle.appendChild(
         createOuterColumn(
             [
@@ -234,6 +250,7 @@ function renderMap() {
 
     mapContainer.appendChild(mapMiddle);
 
+    // 下側
     mapContainer.appendChild(
         createOuterRow(
             [
@@ -267,9 +284,10 @@ function shouldShowDealer(dealer) {
     }
 
     const state = savedState[dealer.booth] || {};
+    const priority = getEffectivePriority(dealer);
 
     if (currentFilter === "priority") {
-        return dealer.priority === "high";
+        return priority === "high";
     }
 
     if (currentFilter === "unvisited") {
@@ -293,6 +311,7 @@ function renderDealerList() {
         .filter(shouldShowDealer)
         .forEach(dealer => {
             const state = savedState[dealer.booth] || {};
+            const priority = getEffectivePriority(dealer);
 
             const card = document.createElement("div");
             card.className = "card";
@@ -308,12 +327,32 @@ function renderDealerList() {
 
             card.innerHTML = `
                 <h3>
-                    ${dealer.priority === "high" ? "❤️" : ""}
-                    ${dealer.priority === "low" ? "⭐" : ""}
+                    ${priority === "high" ? "❤️" : ""}
+                    ${priority === "low" ? "⭐" : ""}
                     ${dealer.booth}　${dealer.name}
                 </h3>
 
                 <div class="status-buttons">
+
+                    <button
+                        type="button"
+                        class="priority-button
+                        ${priority === "high" ? "selected-priority" : ""}"
+                        data-booth="${dealer.booth}"
+                        data-priority="high"
+                    >
+                        ❤️ 優先
+                    </button>
+
+                    <button
+                        type="button"
+                        class="priority-button
+                        ${priority === "low" ? "selected-interest" : ""}"
+                        data-booth="${dealer.booth}"
+                        data-priority="low"
+                    >
+                        ⭐ 気になる
+                    </button>
 
                     <button
                         type="button"
@@ -369,9 +408,41 @@ function renderDealerList() {
 }
 
 // ------------------------------------
-// 見た・購入済みボタン
+// ボタンの動作
 // ------------------------------------
 function addStatusButtonEvents() {
+
+    // 優先・気になる
+    document
+        .querySelectorAll(".priority-button")
+        .forEach(button => {
+            button.addEventListener("click", () => {
+                const booth = button.dataset.booth;
+                const selectedPriority = button.dataset.priority;
+                const dealer = findDealer(booth);
+
+                if (!savedState[booth]) {
+                    savedState[booth] = {};
+                }
+
+                const currentPriority =
+                    getEffectivePriority(dealer);
+
+                // 同じボタンをもう一度押すと通常へ戻る
+                if (currentPriority === selectedPriority) {
+                    savedState[booth].priority = "normal";
+                } else {
+                    savedState[booth].priority =
+                        selectedPriority;
+                }
+
+                saveState();
+                renderMap();
+                renderDealerList();
+            });
+        });
+
+    // 見た
     document
         .querySelectorAll(".visited-button")
         .forEach(button => {
@@ -391,6 +462,7 @@ function addStatusButtonEvents() {
             });
         });
 
+    // 購入済み
     document
         .querySelectorAll(".purchased-button")
         .forEach(button => {
@@ -416,10 +488,16 @@ function addStatusButtonEvents() {
 }
 
 // ------------------------------------
-// 検索・フィルター
+// 検索
 // ------------------------------------
-searchInput.addEventListener("input", renderDealerList);
+searchInput.addEventListener(
+    "input",
+    renderDealerList
+);
 
+// ------------------------------------
+// フィルター
+// ------------------------------------
 showAllButton.addEventListener("click", () => {
     currentFilter = "all";
     updateFilterButtons();
